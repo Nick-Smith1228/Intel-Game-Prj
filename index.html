@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f8f6" />
+    <title>Rain Catcher — every drop counts</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="rain-backdrop" aria-hidden="true"></div>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Rain Catcher home">
+          <span class="brand-mark" aria-hidden="true">💧</span>
+          <span>rain<span class="brand-colon">:</span>catcher</span>
+        </a>
+        <span class="brand-note">A little game about every drop</span>
+      </header>
+
+      <section class="screen welcome-screen" id="welcomeScreen" aria-labelledby="gameTitle">
+        <div class="welcome-copy">
+          <span class="eyebrow"><span class="eyebrow-dot"></span> A RAINY DAY CHALLENGE</span>
+          <h1 id="gameTitle">Rain<br /><span>catcher.</span></h1>
+          <p>Rain is on the way. Draw a path, catch every drop, and help fill a little can.</p>
+          <button class="button button-primary" id="playButton">Play <span aria-hidden="true">→</span></button>
+          <div class="welcome-footnote"><span aria-hidden="true">✳</span> Make every line count.</div>
+        </div>
+        <div class="welcome-art" aria-hidden="true">
+          <div class="sun-glow"></div>
+          <div class="art-cloud"><span></span><span></span><span></span></div>
+          <div class="art-drop drop-one"></div>
+          <div class="art-drop drop-two"></div>
+          <div class="art-drop drop-three"></div>
+          <div class="art-can">
+            <svg class="art-can-svg" viewBox="0 0 150 228" role="img" aria-label="Yellow charity water can">
+              <path fill="#f2d20d" d="M22 24 40 14h70l18 10 13 26v160q0 16-16 16H24q-17 0-17-16V51z" />
+              <rect x="51" y="32" width="48" height="12" rx="6" fill="#fff" />
+              <path d="m29 75 20 34m72-34-20 34m-72 64 20-35m72 35-20-35" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="13" />
+              <rect x="47" y="111" width="56" height="24" rx="5" fill="#f2d20d" />
+            </svg>
+          </div>
+          <div class="art-ground"></div>
+          <span class="art-caption">CATCH THE GOOD STUFF</span>
+        </div>
+      </section>
+
+      <section class="screen level-screen hidden" id="levelScreen" aria-labelledby="levelTitle">
+        <div class="section-heading">
+          <button class="text-button back-button" id="homeButton" aria-label="Back to home">← <span>Home</span></button>
+          <span class="eyebrow"><span class="eyebrow-dot"></span> YOUR ADVENTURE</span>
+          <h1 id="levelTitle">Choose a level<span class="heading-period">.</span></h1>
+          <p>One little puddle at a time.</p>
+        </div>
+        <div class="level-grid">
+          <button class="level-card level-open" id="levelOneButton">
+            <span class="level-number">01 <span>·</span> THE FIRST DROP</span>
+            <span class="level-illustration illustration-one" aria-hidden="true">
+              <span class="mini-cloud"></span><span class="mini-rain"></span><span class="mini-can"></span>
+            </span>
+            <span class="level-card-bottom"><span><strong>The Calm Before</strong><small>Guide the rain into the can</small></span><span class="level-arrow">↗</span></span>
+          </button>
+          <button class="level-card level-locked" id="levelTwoButton" disabled>
+            <span class="level-number">02 <span>·</span> THE EYE</span>
+            <span class="level-illustration illustration-two" aria-hidden="true">
+              <span class="lock-cloud"></span><span class="lock-symbol">⌑</span>
+            </span>
+            <span class="level-card-bottom"><span><strong>The Eye</strong><small>Win level one to unlock</small></span><span class="lock-icon" aria-label="Locked">⌑</span></span>
+          </button>
+          <button class="level-card level-locked" id="levelThreeButton" disabled>
+            <span class="level-number">03 <span>·</span> ON THE HORIZON</span>
+            <span class="level-illustration illustration-three" aria-hidden="true">
+              <span class="horizon-sun"></span><span class="horizon-cloud"></span>
+            </span>
+            <span class="level-card-bottom"><span><strong>Farther afield</strong><small>A new challenge awaits</small></span><span class="lock-icon" aria-label="Locked">⌑</span></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="screen game-screen hidden" id="gameScreen" aria-labelledby="gameHeading">
+        <div class="game-header">
+          <button class="text-button back-button" id="levelsButton">← <span>Levels</span></button>
+          <div class="game-title-group">
+            <span class="eyebrow"><span class="eyebrow-dot"></span> LEVEL 01</span>
+            <h1 id="gameHeading">The Calm Before<span class="heading-period">.</span></h1>
+          </div>
+          <button class="button button-reset" id="resetButton" title="Start over">↻ <span>Reset</span></button>
+        </div>
+        <div class="game-stats" aria-live="polite">
+          <div class="stat"><span class="stat-label">TIME LEFT</span><strong id="timerText">15<span>s</span></strong></div>
+          <div class="stat stat-water"><span class="stat-label">WATER CAUGHT</span><strong id="waterText">0<span>%</span></strong></div>
+          <div class="stat"><span class="stat-label">LINES DRAWN</span><strong id="linesText">0</strong></div>
+          <div class="stat-hint" id="gameHint">Draw a path from the cloud to the can.</div>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="gameCanvas" aria-label="Draw a line from the rain cloud to guide water into the can."></canvas>
+          <div class="canvas-label label-cloud">THE CLOUD</div>
+          <div class="canvas-label label-can">YOUR CAN</div>
+          <div class="canvas-message hidden" id="canvasMessage"></div>
+          <div class="level-intro hidden" id="levelIntro" role="dialog" aria-labelledby="levelIntroTitle" aria-describedby="levelIntroDescription">
+            <span class="eyebrow"><span class="eyebrow-dot"></span> LEVEL 02 BRIEFING</span>
+            <h2 id="levelIntroTitle">The Eye<span class="heading-period">.</span></h2>
+            <p id="levelIntroDescription">Two storm clouds guard the route, and their lightning strikes are dangerous. You can't draw through the glowing strike zones. Guide the rain around them and fill both cans before the storm passes.</p>
+            <button class="button button-primary" id="levelIntroButton">Enter the storm <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+        <div class="game-controls">
+          <p><span class="draw-icon" aria-hidden="true">↗</span> <span id="controlHint">Drag to draw a path. Fewer lines = a better score.</span></p>
+          <button class="button button-primary rain-button" id="rainButton">Start the rain <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+
+      <section class="screen win-screen hidden" id="winScreen" aria-labelledby="winTitle">
+        <div class="win-sparkles" aria-hidden="true">✳ &nbsp; ✦ &nbsp; ✳</div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span> YOU DID IT</span>
+        <h1 id="winTitle">Every drop<br /><span>counts.</span></h1>
+        <p class="win-description">You filled the can with <strong id="winWater">0</strong> drops and used <strong id="winLines">0</strong> lines. That's something to feel good about.</p>
+        <div class="win-score"><span>YOUR SCORE</span><strong id="scoreText">0</strong><small>drops caught · fewer lines score higher</small></div>
+        <div class="unlock-note" id="unlockNote"><span>✳</span> Level 02 unlocked — a new challenge is on the horizon.</div>
+        <div class="win-actions">
+          <button class="button button-primary" id="winLevelsButton">Choose a level <span aria-hidden="true">→</span></button>
+          <button class="button button-secondary" id="againButton">Play again</button>
+        </div>
+      </section>
+
+      <footer class="footer"><span>rain<span class="brand-colon">:</span>catcher</span><span>EVERY DROP COUNTS</span></footer>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
