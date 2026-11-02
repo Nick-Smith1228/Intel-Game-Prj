@@ -4,6 +4,17 @@ const screens = {
   game: document.getElementById("gameScreen"),
   win: document.getElementById("winScreen"),
 };
+const rainSoundButton = document.getElementById("soundToggle");
+const rainSoundLabel = document.getElementById("soundToggleLabel");
+let rainSoundEnabled = false;
+let rainAudioContext = null;
+let rainNoiseBuffer = null;
+let rainSource = null;
+let rainGain = null;
+let stormAmbienceSource = null;
+let stormAmbienceGain = null;
+const milestoneMessage = document.getElementById("milestoneMessage");
+let milestoneTimeout;
 
 const canvas = document.getElementById("gameCanvas");
 const context = canvas.getContext("2d");
@@ -15,9 +26,15 @@ const gameHint = document.getElementById("gameHint");
 const controlHint = document.getElementById("controlHint");
 const canvasMessage = document.getElementById("canvasMessage");
 const rainButton = document.getElementById("rainButton");
+const hardModeToggle = document.getElementById("hardModeToggle");
+const hardModeState = document.getElementById("hardModeState");
 const levelTwoButton = document.getElementById("levelTwoButton");
+const levelThreeButton = document.getElementById("levelThreeButton");
 const levelIntro = document.getElementById("levelIntro");
 const levelIntroButton = document.getElementById("levelIntroButton");
+const levelIntroLabel = document.getElementById("levelIntroLabel");
+const levelIntroTitle = document.getElementById("levelIntroTitle");
+const levelIntroDescription = document.getElementById("levelIntroDescription");
 const levelHeading = document.querySelector("#levelScreen .section-heading > p");
 const gameHeading = document.getElementById("gameHeading");
 const gameLevelLabel = document.querySelector(".game-title-group .eyebrow");
@@ -34,37 +51,300 @@ const state = {
   drops: [],
   particles: [],
   waterCaught: 0,
-  canFill: { left: 0, right: 0 },
+  canFill: { left: 0, right: 0, a: 0, b: 0, c: 0 },
   lineCount: 0,
   timeLeft: 15,
   running: false,
   roundEnded: false,
   won: false,
+  hardMode: false,
   lastFrame: 0,
   spawnTimer: 0,
   unlockedLevelTwo: localStorage.getItem("rainCatcherLevelTwo") === "true",
+  unlockedLevelThree: localStorage.getItem("rainCatcherLevelThree") === "true",
   drawing: false,
 };
 
+const waterMilestones = [
+  { score: 5, message: "5 drops caught — great start!" },
+  { score: 10, message: "10 drops saved — keep it flowing!" },
+  { score: 15, message: "15 drops caught — halfway there!" },
+  { score: 20, message: "20 drops saved — you’re on a roll!" },
+  { score: 25, message: "25 drops caught — almost there!" },
+  { score: 35, message: "35 drops saved — excellent guiding!" },
+  { score: 40, message: "40 drops caught — what a water saver!" },
+];
+const hardModeLineLength = 450;
+
 const random = (min, max) => min + Math.random() * (max - min);
+
+function hardModeLineLimit() {
+  return state.selectedLevel === 3 ? 3 : 1;
+}
+
+function updateHardModeControl() {
+  hardModeState.textContent = state.hardMode ? "On" : "Off";
+  hardModeToggle.setAttribute("aria-pressed", String(state.hardMode));
+  hardModeToggle.disabled = state.running || state.lineCount > 0;
+  hardModeToggle.title = hardModeToggle.disabled
+    ? "Reset the round to change hard mode."
+    : state.selectedLevel === 1
+      ? "Hard mode: one line, up to 450 pixels long."
+      : `Hard mode: up to ${hardModeLineLimit()} lines, with no length limit.`;
+}
+
+function hardModeInstructions() {
+  if (!state.hardMode) return "";
+  if (state.selectedLevel === 1) return " Hard mode: 1 line, maximum 450px.";
+  return ` Hard mode: ${hardModeLineLimit()} line${hardModeLineLimit() === 1 ? "" : "s"}, no length limit.`;
+}
 
 function showScreen(name) {
   Object.entries(screens).forEach(([screenName, screen]) => {
     screen.classList.toggle("hidden", screenName !== name);
   });
+  if (name === "welcome" && rainSoundEnabled) {
+    startRainSound();
+  } else {
+    stopRainSound();
+  }
+  if (name === "game") {
+    startStormAmbience();
+  } else {
+    stopStormAmbience();
+  }
   if (name === "game") {
     requestAnimationFrame(resizeCanvas);
   }
 }
 
+function updateRainSoundButton(label = rainSoundEnabled ? "Rain sound on" : "Rain sound off") {
+  rainSoundLabel.textContent = label;
+  rainSoundButton.setAttribute("aria-pressed", String(rainSoundEnabled));
+}
+
+function getRainAudioContext() {
+  if (!window.AudioContext) return null;
+
+  if (!rainAudioContext) {
+    rainAudioContext = new AudioContext();
+    const sampleCount = Math.floor(rainAudioContext.sampleRate * 3);
+    rainNoiseBuffer = rainAudioContext.createBuffer(1, sampleCount, rainAudioContext.sampleRate);
+    const samples = rainNoiseBuffer.getChannelData(0);
+    for (let i = 0; i < sampleCount; i += 1) {
+      samples[i] = Math.random() * 2 - 1;
+    }
+  }
+
+  return rainAudioContext;
+}
+
+async function startRainSound() {
+  if (!rainSoundEnabled || !screens.welcome || screens.welcome.classList.contains("hidden")) return;
+  if (rainSource) return;
+
+  try {
+    const audioContext = getRainAudioContext();
+    if (!audioContext) {
+      rainSoundEnabled = false;
+      rainSoundButton.disabled = true;
+      updateRainSoundButton("Rain sound unavailable");
+      return;
+    }
+
+    await audioContext.resume();
+    if (!rainSoundEnabled || screens.welcome.classList.contains("hidden")) return;
+
+    const source = audioContext.createBufferSource();
+    const lowPass = audioContext.createBiquadFilter();
+    const highPass = audioContext.createBiquadFilter();
+    const volume = audioContext.createGain();
+    source.buffer = rainNoiseBuffer;
+    source.loop = true;
+    lowPass.type = "lowpass";
+    lowPass.frequency.value = 1100;
+    highPass.type = "highpass";
+    highPass.frequency.value = 180;
+    volume.gain.setValueAtTime(0, audioContext.currentTime);
+    volume.gain.linearRampToValueAtTime(0.025, audioContext.currentTime + 0.6);
+    source.connect(lowPass);
+    lowPass.connect(highPass);
+    highPass.connect(volume);
+    volume.connect(rainAudioContext.destination);
+    source.onended = () => {
+      source.disconnect();
+      lowPass.disconnect();
+      highPass.disconnect();
+      volume.disconnect();
+      if (rainGain === volume) rainGain = null;
+    };
+    rainSource = source;
+    rainGain = volume;
+    source.start();
+  } catch (error) {
+    console.error("Unable to start the home-screen rain sound.", error);
+    rainSoundEnabled = false;
+    updateRainSoundButton("Rain sound unavailable");
+  }
+}
+
+function playSplashSound() {
+  try {
+    const audioContext = getRainAudioContext();
+    if (!audioContext) return;
+    if (audioContext.state === "suspended") {
+      void audioContext.resume().catch((error) => {
+        console.error("Unable to resume audio for the water splash.", error);
+      });
+    }
+
+    const now = audioContext.currentTime;
+    const source = audioContext.createBufferSource();
+    const filter = audioContext.createBiquadFilter();
+    const volume = audioContext.createGain();
+    source.buffer = rainNoiseBuffer;
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(1050, now);
+    filter.frequency.exponentialRampToValueAtTime(420, now + 0.16);
+    filter.Q.value = 0.7;
+    volume.gain.setValueAtTime(0.035, now);
+    volume.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    source.connect(filter);
+    filter.connect(volume);
+    volume.connect(audioContext.destination);
+    source.onended = () => {
+      source.disconnect();
+      filter.disconnect();
+      volume.disconnect();
+    };
+    source.start(now, Math.random() * (rainNoiseBuffer.duration - 0.2), 0.18);
+  } catch (error) {
+    console.error("Unable to play the water splash sound.", error);
+  }
+}
+
+async function playVictorySound() {
+  try {
+    const audioContext = getRainAudioContext();
+    if (!audioContext) return;
+    if (audioContext.state === "suspended") await audioContext.resume();
+
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    const startAt = audioContext.currentTime;
+    notes.forEach((frequency, index) => {
+      const start = startAt + index * 0.12;
+      const oscillator = audioContext.createOscillator();
+      const volume = audioContext.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      volume.gain.setValueAtTime(0.0001, start);
+      volume.gain.linearRampToValueAtTime(0.045, start + 0.025);
+      volume.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
+      oscillator.connect(volume);
+      volume.connect(audioContext.destination);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        volume.disconnect();
+      };
+      oscillator.start(start);
+      oscillator.stop(start + 0.34);
+    });
+  } catch (error) {
+    console.error("Unable to play the victory sound.", error);
+  }
+}
+
+function stopRainSound() {
+  if (!rainSource || !rainAudioContext || !rainGain) return;
+
+  const source = rainSource;
+  const volume = rainGain;
+  rainSource = null;
+  const stopAt = rainAudioContext.currentTime + 0.25;
+  try {
+    volume.gain.cancelScheduledValues(rainAudioContext.currentTime);
+    volume.gain.setValueAtTime(volume.gain.value, rainAudioContext.currentTime);
+    volume.gain.linearRampToValueAtTime(0, stopAt);
+    source.stop(stopAt);
+  } catch (error) {
+    console.error("Unable to stop the home-screen rain sound.", error);
+  }
+}
+
+async function startStormAmbience() {
+  if (screens.game.classList.contains("hidden") || stormAmbienceSource) return;
+
+  try {
+    const audioContext = getRainAudioContext();
+    if (!audioContext) return;
+
+    await audioContext.resume();
+    if (screens.game.classList.contains("hidden") || stormAmbienceSource) return;
+
+    const source = audioContext.createBufferSource();
+    const lowPass = audioContext.createBiquadFilter();
+    const volume = audioContext.createGain();
+    source.buffer = rainNoiseBuffer;
+    source.loop = true;
+    lowPass.type = "lowpass";
+    lowPass.frequency.value = 180;
+    lowPass.Q.value = 0.6;
+    volume.gain.setValueAtTime(0, audioContext.currentTime);
+    volume.gain.linearRampToValueAtTime(0.003, audioContext.currentTime + 1.2);
+    source.connect(lowPass);
+    lowPass.connect(volume);
+    volume.connect(audioContext.destination);
+    source.onended = () => {
+      source.disconnect();
+      lowPass.disconnect();
+      volume.disconnect();
+      if (stormAmbienceSource === source) {
+        stormAmbienceSource = null;
+        stormAmbienceGain = null;
+      }
+    };
+    stormAmbienceSource = source;
+    stormAmbienceGain = volume;
+    source.start();
+  } catch (error) {
+    console.error("Unable to start the level storm ambience.", error);
+  }
+}
+
+function stopStormAmbience() {
+  if (!stormAmbienceSource || !stormAmbienceGain || !rainAudioContext) return;
+
+  const source = stormAmbienceSource;
+  const volume = stormAmbienceGain;
+  stormAmbienceSource = null;
+  stormAmbienceGain = null;
+  const stopAt = rainAudioContext.currentTime + 0.45;
+  try {
+    volume.gain.cancelScheduledValues(rainAudioContext.currentTime);
+    volume.gain.setValueAtTime(volume.gain.value, rainAudioContext.currentTime);
+    volume.gain.linearRampToValueAtTime(0, stopAt);
+    source.stop(stopAt);
+  } catch (error) {
+    console.error("Unable to stop the level storm ambience.", error);
+  }
+}
+
 function updateLevelCards() {
-  if (!state.unlockedLevelTwo) return;
-  levelTwoButton.disabled = false;
-  levelTwoButton.classList.remove("level-locked");
-  levelTwoButton.classList.add("level-open");
-  levelTwoButton.querySelector(".level-card-bottom small").textContent = "Fill both cans. Dodge the lightning.";
-  levelTwoButton.querySelector(".lock-icon").textContent = "↗";
-  levelTwoButton.querySelector(".lock-icon").setAttribute("aria-label", "Unlocked");
+  if (state.unlockedLevelTwo) {
+    levelTwoButton.disabled = false;
+    levelTwoButton.classList.remove("level-locked");
+    levelTwoButton.classList.add("level-open");
+    levelTwoButton.querySelector(".level-card-bottom small").textContent = "Fill both cans. Dodge the lightning.";
+    levelTwoButton.querySelector(".lock-icon").textContent = "↗";
+    levelTwoButton.querySelector(".lock-icon").setAttribute("aria-label", "Unlocked");
+  }
+  if (state.unlockedLevelThree) {
+    levelThreeButton.disabled = false;
+    levelThreeButton.classList.remove("level-locked");
+    levelThreeButton.classList.add("level-open");
+    levelThreeButton.querySelector(".lock-icon").textContent = "↗";
+    levelThreeButton.querySelector(".lock-icon").setAttribute("aria-label", "Unlocked");
+  }
 }
 
 function resizeCanvas() {
@@ -98,6 +378,24 @@ function resizeCanvas() {
 function scenePoints() {
   const { width, height } = state;
   const groundY = height * 0.91;
+  if (state.selectedLevel === 3) {
+    const canHeight = Math.min(height * 0.19, 76);
+    return {
+      clouds: [
+        { letter: "a", x: width * 0.17, y: height * 0.17 },
+        { letter: "b", x: width * 0.5, y: height * 0.14 },
+        { letter: "c", x: width * 0.83, y: height * 0.17 },
+      ],
+      cans: [
+        { letter: "c", x: width * 0.16 },
+        { letter: "b", x: width * 0.5 },
+        { letter: "a", x: width * 0.84 },
+      ],
+      groundY,
+      canTop: groundY - canHeight,
+      canWidth: Math.min(width * 0.095, 52),
+    };
+  }
   if (state.selectedLevel === 2) {
     const canHeight = Math.min(height * 0.21, 88);
     return {
@@ -183,8 +481,11 @@ function drawLightning() {
   context.restore();
 }
 
-function drawCloud(x, y) {
+function drawCloud(x, y, scale = 1, showFace = true) {
   context.save();
+  context.translate(x, y);
+  context.scale(scale, scale);
+  context.translate(-x, -y);
   context.fillStyle = "#ffffff";
   context.shadowColor = "rgba(53, 112, 106, 0.11)";
   context.shadowBlur = 18;
@@ -196,11 +497,29 @@ function drawCloud(x, y) {
   context.closePath();
   context.fill();
   context.restore();
-  context.fillStyle = "rgba(21, 107, 106, 0.22)";
-  context.beginPath();
-  context.arc(x - 10, y + 5, 1.7, 0, Math.PI * 2);
-  context.arc(x + 10, y + 5, 1.7, 0, Math.PI * 2);
-  context.fill();
+  if (showFace) {
+    context.save();
+    context.translate(x, y);
+    context.scale(scale, scale);
+    context.translate(-x, -y);
+    context.fillStyle = "rgba(21, 107, 106, 0.22)";
+    context.beginPath();
+    context.arc(x - 10, y + 5, 1.7, 0, Math.PI * 2);
+    context.arc(x + 10, y + 5, 1.7, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+}
+
+function drawMarkedCloud(x, y, letter) {
+  drawCloud(x, y, 0.72, false);
+  context.save();
+  context.fillStyle = "#26777b";
+  context.font = '700 13px "Space Grotesk", sans-serif';
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(letter.toUpperCase(), x, y + 7);
+  context.restore();
 }
 
 function drawTree(x, baseY, size) {
@@ -286,7 +605,7 @@ function drawLandscape(width, height, groundY) {
   context.restore();
 }
 
-function drawCanAt(canX, canTop, groundY, canWidth, caught, capacity) {
+function drawCanAt(canX, canTop, groundY, canWidth, caught, capacity, letter = "") {
   const canHeight = groundY - canTop;
   const left = canX - canWidth / 2;
   const top = canTop;
@@ -335,6 +654,15 @@ function drawCanAt(canX, canTop, groundY, canWidth, caught, capacity) {
   context.lineTo(left + canWidth * 0.63, top + canHeight * 0.63);
   context.stroke();
   context.restore();
+  if (letter) {
+    context.save();
+    context.fillStyle = "#176c70";
+    context.font = '700 12px "Space Grotesk", sans-serif';
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(letter.toUpperCase(), canX, top + canHeight * 0.67);
+    context.restore();
+  }
 }
 
 function drawCan() {
@@ -344,13 +672,20 @@ function drawCan() {
     drawCanAt(points.rightCanX, points.canTop, points.groundY, points.canWidth, state.canFill.right, 15);
     return;
   }
+  if (state.selectedLevel === 3) {
+    points.cans.forEach((can) => {
+      drawCanAt(can.x, points.canTop, points.groundY, points.canWidth, state.canFill[can.letter], 15, can.letter);
+    });
+    return;
+  }
   drawCanAt(points.canX, points.canTop, points.groundY, points.canWidth, state.waterCaught, 30);
 }
 
 function drawScene() {
   const { width, height } = state;
   if (!width || !height) return;
-  const { cloudX, cloudY, groundY } = scenePoints();
+  const points = scenePoints();
+  const { cloudX, cloudY, groundY } = points;
   context.clearRect(0, 0, width, height);
 
   drawStormySky(width, height);
@@ -360,7 +695,11 @@ function drawScene() {
     drawStormCloud(width * 0.71, height * 0.32, Math.min(width * 0.14, 92), "#596874");
     drawLightning();
   }
-  drawCloud(cloudX, cloudY);
+  if (state.selectedLevel === 3) {
+    points.clouds.forEach((cloud) => drawMarkedCloud(cloud.x, cloud.y, cloud.letter));
+  } else {
+    drawCloud(cloudX, cloudY);
+  }
   drawCan();
 
   state.strokes.forEach((stroke) => {
@@ -404,9 +743,21 @@ function drawScene() {
 }
 
 function updateStats() {
+  const capacity = state.selectedLevel === 3 ? 45 : 30;
   timerText.innerHTML = `${Math.ceil(state.timeLeft)}<span>s</span>`;
-  waterText.innerHTML = `${Math.min(100, Math.round((state.waterCaught / 30) * 100))}<span>%</span>`;
+  waterText.innerHTML = `${Math.min(100, Math.round((state.waterCaught / capacity) * 100))}<span>%</span>`;
   linesText.textContent = String(state.lineCount);
+  updateHardModeControl();
+}
+
+function checkWaterMilestone() {
+  const milestone = waterMilestones.find(({ score }) => score === state.waterCaught);
+  if (!milestone) return;
+
+  milestoneMessage.textContent = milestone.message;
+  milestoneMessage.classList.remove("hidden");
+  clearTimeout(milestoneTimeout);
+  milestoneTimeout = setTimeout(() => milestoneMessage.classList.add("hidden"), 2400);
 }
 
 function setRoundMessage(message) {
@@ -419,6 +770,8 @@ function clearRoundMessage() {
 }
 
 function resetGame() {
+  clearTimeout(milestoneTimeout);
+  milestoneMessage.classList.add("hidden");
   state.strokes = [];
   state.activeStroke = null;
   state.drops = [];
@@ -426,6 +779,9 @@ function resetGame() {
   state.waterCaught = 0;
   state.canFill.left = 0;
   state.canFill.right = 0;
+  state.canFill.a = 0;
+  state.canFill.b = 0;
+  state.canFill.c = 0;
   state.lineCount = 0;
   state.timeLeft = 15;
   state.running = false;
@@ -433,16 +789,21 @@ function resetGame() {
   state.won = false;
   state.spawnTimer = 0;
   state.drawing = false;
+  updateHardModeControl();
   rainButton.disabled = state.levelIntroOpen;
-  rainButton.innerHTML = state.selectedLevel === 2
+  rainButton.innerHTML = state.selectedLevel > 1
     ? 'Start the storm <span aria-hidden="true">→</span>'
     : 'Start the rain <span aria-hidden="true">→</span>';
-  gameHint.textContent = state.selectedLevel === 2
-    ? "Fill both cans before the 15-second storm passes."
-    : "Draw a path from the cloud to the can.";
-  controlHint.textContent = state.selectedLevel === 2
-    ? "Guide the rain to both cans. Keep clear of the lightning."
-    : "Drag to draw a path. Fewer lines = a better score.";
+  gameHint.textContent = state.selectedLevel === 3
+    ? "Match each cloud to its can: A to A, B to B, C to C."
+    : state.selectedLevel === 2
+      ? "Fill both cans before the 15-second storm passes."
+      : "Draw a path from the cloud to the can.";
+  controlHint.textContent = state.selectedLevel === 3
+    ? "Guide each cloud's rain to its matching can."
+    : state.selectedLevel === 2
+      ? "Guide the rain to both cans. Keep clear of the lightning."
+      : "Drag to draw a path. Fewer lines = a better score.";
   levelIntro.classList.toggle("hidden", !state.levelIntroOpen);
   clearRoundMessage();
   updateStats();
@@ -464,23 +825,37 @@ function makeConfetti() {
 }
 
 function winRound() {
-  const objectivesComplete = state.selectedLevel === 2
-    ? state.canFill.left >= 15 && state.canFill.right >= 15
-    : state.waterCaught >= 30;
+  const objectivesComplete = state.selectedLevel === 3
+    ? state.canFill.a >= 15 && state.canFill.b >= 15 && state.canFill.c >= 15
+    : state.selectedLevel === 2
+      ? state.canFill.left >= 15 && state.canFill.right >= 15
+      : state.waterCaught >= 30;
   if (state.won || !objectivesComplete) return;
   state.running = false;
   state.roundEnded = true;
   state.won = true;
-  state.unlockedLevelTwo = true;
-  localStorage.setItem("rainCatcherLevelTwo", "true");
+  if (state.selectedLevel === 1) {
+    state.unlockedLevelTwo = true;
+    localStorage.setItem("rainCatcherLevelTwo", "true");
+  }
+  if (state.selectedLevel === 2) {
+    state.unlockedLevelThree = true;
+    localStorage.setItem("rainCatcherLevelThree", "true");
+  }
   updateLevelCards();
   document.getElementById("winWater").textContent = String(state.waterCaught);
   document.getElementById("winLines").textContent = String(state.lineCount);
   const score = Math.max(0, state.waterCaught * 100 - Math.max(0, state.lineCount - 1) * 250);
   document.getElementById("scoreText").textContent = score.toLocaleString();
   const unlockNote = document.getElementById("unlockNote");
-  unlockNote.classList.toggle("hidden", state.selectedLevel !== 1);
+  unlockNote.classList.toggle("hidden", state.selectedLevel === 3);
+  if (state.selectedLevel === 1) {
+    unlockNote.lastChild.textContent = " Level 02 unlocked — The Eye awaits.";
+  } else if (state.selectedLevel === 2) {
+    unlockNote.lastChild.textContent = " Level 03 unlocked — The Storm is waiting.";
+  }
   showScreen("win");
+  void playVictorySound();
   makeConfetti();
 }
 
@@ -497,17 +872,33 @@ function endRound() {
 function startRain() {
   if (state.roundEnded) resetGame();
   if (state.levelIntroOpen) return;
+  try {
+    const audioContext = getRainAudioContext();
+    if (audioContext?.state === "suspended") {
+      void audioContext.resume().catch((error) => {
+        console.error("Unable to resume game audio.", error);
+      });
+    }
+  } catch (error) {
+    console.error("Unable to initialize game audio.", error);
+  }
   state.running = true;
+  updateHardModeControl();
   state.lastFrame = performance.now();
   state.spawnTimer = 0;
   rainButton.disabled = true;
   rainButton.innerHTML = "Rain is falling…";
-  gameHint.textContent = state.selectedLevel === 2
-    ? "Fill both cans with 15 drops each before time runs out."
-    : "Catch 30 drops before the 15 seconds are up.";
-  controlHint.textContent = state.selectedLevel === 2
-    ? "Draw around the lightning and guide rain to both cans."
-    : "Keep drawing a path to guide each drop into the can.";
+  gameHint.textContent = state.selectedLevel === 3
+    ? "Fill A, B, and C with 15 matching drops each before time runs out."
+    : state.selectedLevel === 2
+      ? "Fill both cans with 15 drops each before time runs out."
+      : "Catch 30 drops before the 15 seconds are up.";
+  controlHint.textContent = state.selectedLevel === 3
+    ? "Guide each cloud's rain to its matching can."
+    : state.selectedLevel === 2
+      ? "Draw around the lightning and guide rain to both cans."
+      : "Keep drawing a path to guide each drop into the can.";
+  controlHint.textContent += hardModeInstructions();
   clearRoundMessage();
 }
 
@@ -524,6 +915,10 @@ function isLightningZone(point) {
 
 function beginDrawing(event) {
   if (screens.game.classList.contains("hidden") || state.roundEnded) return;
+  if (state.hardMode && state.lineCount >= hardModeLineLimit()) {
+    gameHint.textContent = `Hard mode allows only ${hardModeLineLimit()} line${hardModeLineLimit() === 1 ? "" : "s"} in this level. Reset to try again.`;
+    return;
+  }
   event.preventDefault();
   const point = pointerPosition(event);
   if (isLightningZone(point)) {
@@ -535,7 +930,7 @@ function beginDrawing(event) {
   }
   canvas.setPointerCapture(event.pointerId);
   state.drawing = true;
-  state.activeStroke = { points: [point] };
+  state.activeStroke = { points: [point], length: 0 };
   state.strokes.push(state.activeStroke);
   drawScene();
 }
@@ -559,8 +954,34 @@ function moveDrawing(event) {
       return;
     }
     const lastPoint = state.activeStroke.points.at(-1);
-    if (Math.hypot(candidate.x - lastPoint.x, candidate.y - lastPoint.y) >= 3) {
+    const segmentLength = Math.hypot(candidate.x - lastPoint.x, candidate.y - lastPoint.y);
+    if (state.hardMode && state.selectedLevel === 1) {
+      const remainingLength = hardModeLineLength - state.activeStroke.length;
+      if (remainingLength <= 0) {
+        gameHint.textContent = "Hard mode line limit reached: 450px maximum.";
+        finishDrawing();
+        return;
+      }
+      if (segmentLength > remainingLength) {
+        const ratio = remainingLength / segmentLength;
+        state.activeStroke.points.push({
+          x: lastPoint.x + (candidate.x - lastPoint.x) * ratio,
+          y: lastPoint.y + (candidate.y - lastPoint.y) * ratio,
+        });
+        state.activeStroke.length += remainingLength;
+        gameHint.textContent = "Hard mode line limit reached: 450px maximum.";
+        finishDrawing();
+        return;
+      }
+    }
+    if (segmentLength >= 3) {
       state.activeStroke.points.push(candidate);
+      state.activeStroke.length += segmentLength;
+      if (state.hardMode && state.selectedLevel === 1 && state.activeStroke.length >= hardModeLineLength) {
+        gameHint.textContent = "Hard mode line limit reached: 450px maximum.";
+        finishDrawing();
+        return;
+      }
     }
   }
   drawScene();
@@ -602,12 +1023,17 @@ function updateDrops(delta) {
     state.spawnTimer += delta;
     while (state.spawnTimer >= 0.12) {
       state.spawnTimer -= 0.12;
+      const sourceCloud = state.selectedLevel === 3
+        ? scenePoints().clouds[Math.floor(random(0, 3))]
+        : null;
+      const { cloudX, cloudY } = scenePoints();
       state.drops.push({
-        x: cloudX + random(-34, 34),
-        y: cloudY + 17,
+        x: (sourceCloud ? sourceCloud.x : cloudX) + random(-24, 24),
+        y: (sourceCloud ? sourceCloud.y : cloudY) + 17,
         vx: random(-7, 7),
         vy: random(35, 65),
         radius: random(2.5, 3.4),
+        source: sourceCloud?.letter,
       });
     }
   }
@@ -661,7 +1087,26 @@ function updateDrops(delta) {
       }
     }
 
-    if (state.selectedLevel === 2) {
+    if (state.selectedLevel === 3) {
+      const points = scenePoints();
+      if (drop.y >= points.canTop && drop.y <= points.groundY) {
+        const caughtCan = points.cans.find((can) =>
+          can.letter === drop.source &&
+          drop.x >= can.x - points.canWidth * 0.48 && drop.x <= can.x + points.canWidth * 0.48);
+        if (caughtCan) {
+          drop.caught = true;
+          if (state.canFill[caughtCan.letter] < 15) {
+            state.canFill[caughtCan.letter] += 1;
+            state.waterCaught += 1;
+            playSplashSound();
+            state.particles.push({ x: drop.x, y: drop.y, radius: 3, life: 0.35 });
+            updateStats();
+            checkWaterMilestone();
+            if (state.canFill.a >= 15 && state.canFill.b >= 15 && state.canFill.c >= 15) winRound();
+          }
+        }
+      }
+    } else if (state.selectedLevel === 2) {
       const points = scenePoints();
       if (drop.y >= points.canTop && drop.y <= points.groundY) {
         const caughtCan = [points.leftCanX, points.rightCanX].find((x) =>
@@ -672,8 +1117,10 @@ function updateDrops(delta) {
           if (state.canFill[side] < 15) {
             state.canFill[side] += 1;
             state.waterCaught += 1;
+            playSplashSound();
             state.particles.push({ x: drop.x, y: drop.y, radius: 3, life: 0.35 });
             updateStats();
+            checkWaterMilestone();
             if (state.canFill.left >= 15 && state.canFill.right >= 15) winRound();
           }
         }
@@ -681,8 +1128,10 @@ function updateDrops(delta) {
     } else if (drop.y >= canTop && drop.y <= groundY && drop.x >= canX - canWidth * 0.43 && drop.x <= canX + canWidth * 0.43) {
       drop.caught = true;
       state.waterCaught += 1;
+      playSplashSound();
       state.particles.push({ x: drop.x, y: drop.y, radius: 3, life: 0.35 });
       updateStats();
+      checkWaterMilestone();
       if (state.waterCaught >= 30) winRound();
     }
   });
@@ -719,6 +1168,26 @@ document.getElementById("playButton").addEventListener("click", () => {
   levelHeading.textContent = "One little puddle at a time.";
   showScreen("levels");
 });
+hardModeToggle.addEventListener("click", () => {
+  if (hardModeToggle.disabled) return;
+  state.hardMode = !state.hardMode;
+  updateHardModeControl();
+  controlHint.textContent = state.selectedLevel === 3
+    ? "Guide each cloud's rain to its matching can."
+    : state.selectedLevel === 2
+      ? "Guide the rain to both cans. Keep clear of the lightning."
+      : "Drag to draw a path. Fewer lines = a better score.";
+  controlHint.textContent += hardModeInstructions();
+});
+rainSoundButton.addEventListener("click", () => {
+  rainSoundEnabled = !rainSoundEnabled;
+  updateRainSoundButton();
+  if (rainSoundEnabled) {
+    startRainSound();
+  } else {
+    stopRainSound();
+  }
+});
 document.getElementById("homeButton").addEventListener("click", () => showScreen("welcome"));
 document.getElementById("levelOneButton").addEventListener("click", () => {
   state.selectedLevel = 1;
@@ -740,6 +1209,25 @@ levelTwoButton.addEventListener("click", () => {
   cloudLabel.textContent = "RAIN CLOUD";
   canLabel.textContent = "TWO CANS";
   canvas.setAttribute("aria-label", "Draw lines to guide rain from the center cloud into both cans, avoiding lightning strikes.");
+  levelIntroLabel.textContent = "LEVEL 02 BRIEFING";
+  levelIntroTitle.firstChild.textContent = "The Eye";
+  levelIntroDescription.textContent = "Two storm clouds guard the route, and their lightning strikes are dangerous. You can't draw through the glowing strike zones. Guide the rain around them and fill both cans before the storm passes.";
+  resetGame();
+  showScreen("game");
+});
+levelThreeButton.addEventListener("click", () => {
+  if (!state.unlockedLevelThree) return;
+  state.selectedLevel = 3;
+  state.levelIntroOpen = true;
+  gameHeading.firstChild.textContent = "The Storm";
+  gameLevelLabel.lastChild.textContent = " LEVEL 03";
+  cloudLabel.textContent = "CLOUDS A · B · C";
+  canLabel.textContent = "CANS C · B · A";
+  canvas.setAttribute("aria-label", "Guide rain from clouds A, B, and C into matching cans A, B, and C.");
+  levelIntroLabel.textContent = "LEVEL 03 BRIEFING";
+  levelIntroTitle.firstChild.textContent = "The Storm";
+  levelIntroDescription.textContent = "Three rain clouds send water toward three jerry cans. Match cloud A to can A, B to B, and C to C. The clouds run left to right A, B, C; the cans run left to right C, B, A.";
+  levelIntroButton.innerHTML = 'Enter the storm <span aria-hidden="true">→</span>';
   resetGame();
   showScreen("game");
 });

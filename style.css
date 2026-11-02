@@ -8,8 +8,8 @@
   text-rendering: optimizeLegibility;
   --ink: #173f42;
   --muted: #718686;
-  --teal: #00a6a6;
-  --teal-dark: #008c8c;
+  --teal: #f2d20d;
+  --teal-dark: #806400;
   --pale: #e7f2ef;
   --line: #dce8e4;
 }
@@ -77,9 +77,9 @@ button {
   gap: 9px;
   color: var(--ink);
   text-decoration: none;
-  font-family: "Space Grotesk", sans-serif;
-  font-weight: 700;
-  font-size: 20px;
+  font-family: Baskerville, "Baskerville Old Face", serif;
+  font-weight: 600;
+  font-size: 22px;
   letter-spacing: -1px;
 }
 
@@ -89,13 +89,13 @@ button {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  color: white;
+  color: var(--ink);
   background: var(--teal);
   font-size: 15px;
 }
 
 .brand-colon {
-  color: var(--teal);
+  color: var(--teal-dark);
 }
 
 .brand-note,
@@ -155,9 +155,15 @@ h1 {
   letter-spacing: -0.075em;
 }
 
+.welcome-copy h1 {
+  font-family: Kazimir, Baskerville, serif;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
 .welcome-copy h1 span,
 .win-screen h1 span {
-  color: var(--teal);
+  color: var(--teal-dark);
 }
 
 .welcome-copy > p,
@@ -189,6 +195,7 @@ h1 {
 }
 
 .button:focus-visible,
+.sound-toggle:focus-visible,
 .level-card:focus-visible,
 .text-button:focus-visible,
 a:focus-visible {
@@ -197,13 +204,38 @@ a:focus-visible {
 }
 
 .button-primary {
-  color: white;
+  color: var(--ink);
   background: var(--teal);
-  box-shadow: 0 7px 18px rgba(0, 166, 166, 0.17);
+  box-shadow: 0 7px 18px rgba(210, 174, 0, 0.2);
 }
 
 .button-primary:hover {
-  background: var(--teal-dark);
+  background: #dfbd00;
+}
+
+.sound-toggle {
+  min-height: 42px;
+  margin-left: 9px;
+  padding: 0 14px;
+  border: 1px solid #e8d98a;
+  border-radius: 7px;
+  color: #725b00;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.sound-toggle:hover,
+.sound-toggle[aria-pressed="true"] {
+  border-color: #e8c15d;
+  background: #fff4c9;
+}
+
+.sound-toggle > span:first-child {
+  margin-right: 5px;
+  color: var(--teal-dark);
 }
 
 .welcome-footnote {
@@ -238,10 +270,7 @@ a:focus-visible {
   box-shadow: 0 0 60px 30px rgba(243, 217, 172, 0.24);
 }
 
-.art-cloud,
-.mini-cloud,
-.lock-cloud,
-.horizon-cloud {
+.art-cloud {
   position: absolute;
   width: 154px;
   height: 52px;
@@ -337,9 +366,97 @@ a:focus-visible {
   letter-spacing: -0.02em;
 }
 
+.footer-link {
+  color: var(--teal-dark);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.impact-section {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 30px;
+  margin: 4px 0 16px;
+  padding: 26px;
+  border: 1px solid #f0e7b5;
+  border-radius: 14px;
+  background: #fff9d8;
+}
+
+.impact-heading h2 {
+  margin: 13px 0 10px;
+  color: var(--ink);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -0.06em;
+}
+
+.impact-heading h2 span {
+  color: var(--teal-dark);
+}
+
+.impact-heading > p,
+.impact-card p {
+  margin: 0;
+  color: #66807f;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.impact-card {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid rgba(220, 232, 228, 0.9);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.impact-icon {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  margin-bottom: 12px;
+  place-items: center;
+  border-radius: 50%;
+  color: #785b00;
+  background: #fff0a8;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.impact-card h3 {
+  margin: 0 0 7px;
+  color: var(--ink);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .section-heading {
   position: relative;
   text-align: center;
+}
+
+.level-screen,
+.level-screen h1,
+.level-screen .eyebrow,
+.level-screen .text-button,
+.level-screen .level-number,
+.level-screen .level-card-bottom,
+.level-screen .lock-icon {
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
 }
 
 .section-heading h1,
@@ -361,7 +478,7 @@ a:focus-visible {
 .text-button {
   border: 0;
   padding: 8px 0;
-  color: #6d8582;
+  color: #806400;
   background: transparent;
   cursor: pointer;
   font-size: 12px;
@@ -437,117 +554,125 @@ button.level-card {
   background: linear-gradient(155deg, #e5f2ee, #f3f7f4);
 }
 
-.mini-cloud {
-  top: 43px;
-  left: 15%;
-  width: 84px;
-  height: 27px;
-  border-radius: 20px;
+.level-illustration svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.mini-cloud::before,
-.mini-cloud::after {
-  position: absolute;
-  bottom: 10px;
-  border-radius: 50%;
-  background: #fff;
-  content: "";
+.illustration-two {
+  background: linear-gradient(155deg, #82939b, #b9c9c5);
 }
 
-.mini-cloud::before { left: 12px; width: 30px; height: 30px; }
-.mini-cloud::after { left: 38px; width: 42px; height: 42px; }
-
-.mini-rain {
-  position: absolute;
-  top: 72px;
-  left: 31%;
-  width: 65px;
-  height: 43px;
-  background: radial-gradient(ellipse, #56babb 0 2px, transparent 3px) 0 0 / 20px 20px;
+.illustration-three {
+  background: linear-gradient(155deg, #dceee8, #f5f4e8);
 }
 
-.mini-can {
-  position: absolute;
-  right: 17%;
-  bottom: 12px;
-  width: 35px;
-  height: 44px;
-  border: 3px solid var(--teal);
-  border-top: 0;
-  border-radius: 4px 4px 9px 9px;
+.preview-ground {
+  stroke: rgba(91, 131, 118, 0.25);
+  stroke-width: 2;
 }
 
-.mini-can::before {
-  position: absolute;
-  top: 11px;
-  left: 4px;
-  width: 11px;
-  height: 17px;
-  border: 3px solid var(--teal);
-  border-right: 0;
-  content: "";
+.preview-cloud {
+  fill: #fff;
+  filter: drop-shadow(0 3px 4px rgba(49, 102, 98, 0.16));
 }
 
-.illustration-two { background: linear-gradient(145deg, #ebf0eb, #e7efec); }
-.lock-cloud {
-  top: 43px;
-  left: 27%;
-  width: 95px;
-  height: 35px;
-  opacity: 0.65;
+.preview-drop {
+  fill: #21a6a7;
 }
 
-.lock-cloud::before,
-.lock-cloud::after {
-  position: absolute;
-  bottom: 13px;
-  border-radius: 50%;
-  background: #fff;
-  content: "";
+.preview-route {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 3;
+  stroke-dasharray: 5 6;
+  opacity: 0.9;
 }
 
-.lock-cloud::before { left: 14px; width: 36px; height: 36px; }
-.lock-cloud::after { left: 47px; width: 48px; height: 48px; }
-
-.lock-symbol {
-  position: absolute;
-  top: 77px;
-  left: 47%;
-  color: #83a09a;
-  font-size: 26px;
+.route-one {
+  stroke: #43a9a4;
 }
 
-.illustration-three { background: linear-gradient(145deg, #f3eee4, #e8efeb); }
-.horizon-sun {
-  position: absolute;
-  top: 31px;
-  left: 44%;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: #efd2a4;
-  opacity: 0.8;
+.preview-jerrycan {
+  --can-cutout: #edf5f1;
 }
 
-.horizon-cloud {
-  top: 77px;
-  left: 33%;
-  width: 102px;
-  height: 35px;
-  opacity: 0.85;
+.illustration-two .preview-jerrycan {
+  --can-cutout: #9caaa8;
 }
 
-.horizon-cloud::before,
-.horizon-cloud::after {
-  position: absolute;
-  bottom: 14px;
-  border-radius: 50%;
-  background: #fff;
-  content: "";
+.illustration-three .preview-jerrycan {
+  --can-cutout: #e8f1eb;
 }
 
-.horizon-cloud::before { left: 11px; width: 37px; height: 37px; }
-.horizon-cloud::after { left: 44px; width: 47px; height: 47px; }
+.jerrycan-body {
+  fill: #f2d20d;
+}
+
+.jerrycan-water {
+  fill: rgba(34, 177, 177, 0.82);
+}
+
+.jerrycan-cutout {
+  fill: var(--can-cutout);
+}
+
+.jerrycan-handle {
+  fill: none;
+  stroke: var(--can-cutout);
+  stroke-linecap: round;
+  stroke-width: 3.2;
+}
+
+.jerrycan-label {
+  fill: #176c70;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.preview-storm-cloud {
+  fill: #53636e;
+  filter: drop-shadow(0 3px 3px rgba(43, 61, 68, 0.2));
+}
+
+.preview-lightning {
+  fill: #ffe66d;
+  stroke: #fff1a7;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.route-two {
+  stroke: #e8f4d0;
+}
+
+.route-three-a {
+  stroke: #dd9f42;
+}
+
+.route-three-b {
+  stroke: #4aa9a2;
+}
+
+.route-three-c {
+  stroke: #7e82bd;
+}
+
+.preview-labeled-cloud path {
+  fill: #fff;
+  filter: drop-shadow(0 2px 3px rgba(49, 102, 98, 0.14));
+}
+
+.preview-labeled-cloud text {
+  fill: #26777b;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+}
 
 .level-card-bottom {
   display: flex;
@@ -624,8 +749,8 @@ button.level-card {
   min-height: 36px;
   padding: 0 12px;
   gap: 8px;
-  border: 1px solid #d9e7e2;
-  color: #63817c;
+  border: 1px solid #e8d98a;
+  color: #806400;
   background: rgba(255, 255, 255, 0.68);
   font-size: 11px;
 }
@@ -734,6 +859,31 @@ button.level-card {
   pointer-events: none;
 }
 
+.milestone-toast {
+  position: absolute;
+  z-index: 2;
+  top: 42px;
+  left: 50%;
+  max-width: calc(100% - 32px);
+  padding: 9px 15px;
+  border: 1px solid rgba(204, 225, 217, 0.9);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(255, 253, 240, 0.96);
+  box-shadow: 0 5px 18px rgba(25, 75, 70, 0.12);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: milestone-pop 220ms ease-out;
+}
+
+@keyframes milestone-pop {
+  from { opacity: 0; translate: 0 -6px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
 .level-intro {
   position: absolute;
   z-index: 3;
@@ -777,11 +927,42 @@ button.level-card {
 
 .game-controls p {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 9px;
   margin: 0;
   color: #718984;
   font-size: 11px;
+}
+
+.game-control-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hard-mode-toggle {
+  min-height: 39px;
+  padding: 0 12px;
+  gap: 5px;
+  color: #806400;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.hard-mode-toggle[aria-pressed="true"] {
+  border-color: #e8c15d;
+  color: #775c10;
+  background: #fff4c9;
+}
+
+.hard-mode-toggle:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.hard-mode-toggle strong {
+  color: var(--ink);
 }
 
 .draw-icon {
@@ -883,6 +1064,48 @@ button.level-card {
   color: #e3a15f;
 }
 
+.victory-sound {
+  margin: 0 auto 22px;
+  padding: 9px 14px;
+  border: 1px solid #dce9e4;
+  border-radius: 999px;
+  color: #728985;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.thank-you-panel {
+  width: min(440px, 100%);
+  margin: 0 auto 23px;
+  padding: 20px;
+  border: 1px solid #f0e7b5;
+  border-radius: 10px;
+  background: #fff9d8;
+}
+
+.thank-you-panel h2 {
+  margin: 10px 0 7px;
+  color: var(--ink);
+  font-family: Baskerville, "Baskerville Old Face", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.thank-you-panel p {
+  margin: 0 auto 14px;
+  color: #66807f;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.thank-you-link {
+  min-height: 38px;
+  gap: 12px;
+  font-size: 11px;
+  text-decoration: none;
+}
+
 .win-actions {
   display: flex;
   justify-content: center;
@@ -890,8 +1113,8 @@ button.level-card {
 }
 
 .button-secondary {
-  border: 1px solid #d8e5e0;
-  color: #65817c;
+  border: 1px solid #e8d98a;
+  color: #806400;
   background: rgba(255, 255, 255, 0.65);
 }
 
@@ -914,6 +1137,12 @@ button.level-card {
     width: min(100% - 40px, 580px);
   }
 
+  .impact-section {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
+
   .welcome-screen {
     min-height: 0;
     grid-template-columns: 1fr;
@@ -931,6 +1160,10 @@ button.level-card {
 
   .welcome-copy > p {
     margin: 16px 0 20px;
+  }
+
+  .sound-toggle {
+    margin-left: 6px;
   }
 
   .welcome-footnote {
@@ -987,14 +1220,6 @@ button.level-card {
   .level-illustration {
     height: 105px;
     margin: 10px 0;
-  }
-
-  .mini-cloud {
-    top: 24px;
-  }
-
-  .mini-rain {
-    top: 55px;
   }
 
   .game-screen {
@@ -1054,15 +1279,21 @@ button.level-card {
   }
 
   .game-controls {
-    align-items: flex-start;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
     padding-top: 12px;
   }
 
   .game-controls p {
-    max-width: 54%;
+    max-width: none;
     align-items: flex-start;
     line-height: 1.5;
     font-size: 10px;
+  }
+
+  .game-control-actions {
+    justify-content: flex-end;
   }
 
   .rain-button {
@@ -1076,6 +1307,18 @@ button.level-card {
 @media (max-width: 420px) {
   .app-shell {
     width: calc(100% - 28px);
+  }
+
+  .impact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer {
+    justify-content: center;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+    text-align: center;
   }
 
   .topbar {

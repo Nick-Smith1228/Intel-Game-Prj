@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f5f8f6" />
+    <meta name="theme-color" content="#fffdf0" />
     <title>Rain Catcher — every drop counts</title>
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -24,6 +24,10 @@
           <h1 id="gameTitle">Rain<br /><span>catcher.</span></h1>
           <p>Rain is on the way. Draw a path, catch every drop, and help fill a little can.</p>
           <button class="button button-primary" id="playButton">Play <span aria-hidden="true">→</span></button>
+          <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">
+            <span aria-hidden="true">♫</span>
+            <span id="soundToggleLabel">Rain sound off</span>
+          </button>
           <div class="welcome-footnote"><span aria-hidden="true">✳</span> Make every line count.</div>
         </div>
         <div class="welcome-art" aria-hidden="true">
@@ -43,6 +47,25 @@
           <div class="art-ground"></div>
           <span class="art-caption">CATCH THE GOOD STUFF</span>
         </div>
+        <section class="impact-section" aria-labelledby="impactTitle">
+          <div class="impact-heading">
+            <span class="eyebrow"><span class="eyebrow-dot"></span> WHY EVERY DROP MATTERS</span>
+            <h2 id="impactTitle">Water changes <span>everything.</span></h2>
+            <p>Clean water supports health, learning, and opportunity. This little game is a reminder that water is worth looking after.</p>
+          </div>
+          <div class="impact-grid">
+            <article class="impact-card">
+              <span class="impact-icon" aria-hidden="true">✳</span>
+              <h3>Clean water, closer to home</h3>
+              <p>charity: water works to bring clean and safe water to people around the world. When water is close by, communities can spend less time collecting it and more time on the things that matter to them.</p>
+            </article>
+            <article class="impact-card">
+              <span class="impact-icon" aria-hidden="true">↓</span>
+              <h3>Make every drop count</h3>
+              <p>At home, turn off the tap while brushing, fix drips, and run full loads of laundry. Small habits help reduce everyday water waste; they complement—not replace—the work of bringing reliable water to communities.</p>
+            </article>
+          </div>
+        </section>
       </section>
 
       <section class="screen level-screen hidden" id="levelScreen" aria-labelledby="levelTitle">
@@ -56,23 +79,91 @@
           <button class="level-card level-open" id="levelOneButton">
             <span class="level-number">01 <span>·</span> THE FIRST DROP</span>
             <span class="level-illustration illustration-one" aria-hidden="true">
-              <span class="mini-cloud"></span><span class="mini-rain"></span><span class="mini-can"></span>
+              <svg viewBox="0 0 300 145" focusable="false">
+                <path class="preview-ground" d="M0 126H300" />
+                <path class="preview-route route-one" d="M105 64Q160 92 218 96" />
+                <path class="preview-cloud" d="M48 54c0-10 8-18 18-18 5-15 26-18 36-4 14-1 23 10 21 22-1 11-10 18-22 18H69c-12 0-21-7-21-18Z" />
+                <circle class="preview-drop" cx="70" cy="82" r="3" />
+                <circle class="preview-drop" cx="84" cy="91" r="3" />
+                <circle class="preview-drop" cx="98" cy="82" r="3" />
+                <g class="preview-jerrycan" transform="translate(215 76) scale(.88)">
+                  <path class="jerrycan-body" d="M6 4 12 1h20l6 3 4 9v32q0 4-4 4H6q-4 0-4-4V13z" />
+                  <path class="jerrycan-water" d="M4 33h36v12q0 2-3 2H7q-3 0-3-2z" />
+                  <path class="jerrycan-cutout" d="M17 5h10v3H17z" />
+                  <path class="jerrycan-handle" d="m8 16 10 10m18-10L26 26M8 40l10-10m18 10L26 30" />
+                </g>
+              </svg>
             </span>
             <span class="level-card-bottom"><span><strong>The Calm Before</strong><small>Guide the rain into the can</small></span><span class="level-arrow">↗</span></span>
           </button>
           <button class="level-card level-locked" id="levelTwoButton" disabled>
             <span class="level-number">02 <span>·</span> THE EYE</span>
             <span class="level-illustration illustration-two" aria-hidden="true">
-              <span class="lock-cloud"></span><span class="lock-symbol">⌑</span>
+              <svg viewBox="0 0 300 145" focusable="false">
+                <path class="preview-ground" d="M0 126H300" />
+                <path class="preview-storm-cloud" d="M102 39c0-10 8-18 18-18 5-15 26-18 36-4 14-1 23 10 21 22-1 11-10 18-22 18h-32c-12 0-21-7-21-18Z" />
+                <path class="preview-lightning" d="m140 59-10 20h12l-8 18 23-26h-13l9-12" />
+                <path class="preview-route route-two" d="M145 83Q104 95 59 99M151 83q41 12 86 16" />
+                <g class="preview-jerrycan" transform="translate(30 84) scale(.8)">
+                  <path class="jerrycan-body" d="M6 4 12 1h20l6 3 4 9v32q0 4-4 4H6q-4 0-4-4V13z" />
+                  <path class="jerrycan-water" d="M4 33h36v12q0 2-3 2H7q-3 0-3-2z" />
+                  <path class="jerrycan-cutout" d="M17 5h10v3H17z" />
+                  <path class="jerrycan-handle" d="m8 16 10 10m18-10L26 26M8 40l10-10m18 10L26 30" />
+                </g>
+                <g class="preview-jerrycan" transform="translate(230 84) scale(.8)">
+                  <path class="jerrycan-body" d="M6 4 12 1h20l6 3 4 9v32q0 4-4 4H6q-4 0-4-4V13z" />
+                  <path class="jerrycan-water" d="M4 33h36v12q0 2-3 2H7q-3 0-3-2z" />
+                  <path class="jerrycan-cutout" d="M17 5h10v3H17z" />
+                  <path class="jerrycan-handle" d="m8 16 10 10m18-10L26 26M8 40l10-10m18 10L26 30" />
+                </g>
+              </svg>
             </span>
             <span class="level-card-bottom"><span><strong>The Eye</strong><small>Win level one to unlock</small></span><span class="lock-icon" aria-label="Locked">⌑</span></span>
           </button>
           <button class="level-card level-locked" id="levelThreeButton" disabled>
-            <span class="level-number">03 <span>·</span> ON THE HORIZON</span>
+            <span class="level-number">03 <span>·</span> THE STORM</span>
             <span class="level-illustration illustration-three" aria-hidden="true">
-              <span class="horizon-sun"></span><span class="horizon-cloud"></span>
+              <svg viewBox="0 0 300 145" focusable="false">
+                <path class="preview-ground" d="M0 126H300" />
+                <path class="preview-route route-three-a" d="M49 48Q150 79 250 96" />
+                <path class="preview-route route-three-b" d="M150 48v49" />
+                <path class="preview-route route-three-c" d="M251 48Q150 79 49 96" />
+                <g class="preview-labeled-cloud">
+                  <path d="M18 37c0-7 6-12 13-12 4-10 18-12 25-3 10-1 16 7 15 15-1 8-7 12-15 12H33c-9 0-15-5-15-12Z" />
+                  <text x="43" y="42">A</text>
+                </g>
+                <g class="preview-labeled-cloud">
+                  <path d="M119 37c0-7 6-12 13-12 4-10 18-12 25-3 10-1 16 7 15 15-1 8-7 12-15 12h-23c-9 0-15-5-15-12Z" />
+                  <text x="144" y="42">B</text>
+                </g>
+                <g class="preview-labeled-cloud">
+                  <path d="M220 37c0-7 6-12 13-12 4-10 18-12 25-3 10-1 16 7 15 15-1 8-7 12-15 12h-23c-9 0-15-5-15-12Z" />
+                  <text x="245" y="42">C</text>
+                </g>
+                <g class="preview-jerrycan preview-jerrycan-labeled" transform="translate(29 86) scale(.72)">
+                  <path class="jerrycan-body" d="M6 4 12 1h20l6 3 4 9v32q0 4-4 4H6q-4 0-4-4V13z" />
+                  <path class="jerrycan-water" d="M4 33h36v12q0 2-3 2H7q-3 0-3-2z" />
+                  <path class="jerrycan-cutout" d="M17 5h10v3H17z" />
+                  <path class="jerrycan-handle" d="m8 16 10 10m18-10L26 26M8 40l10-10m18 10L26 30" />
+                  <text class="jerrycan-label" x="22" y="30">C</text>
+                </g>
+                <g class="preview-jerrycan preview-jerrycan-labeled" transform="translate(129 86) scale(.72)">
+                  <path class="jerrycan-body" d="M6 4 12 1h20l6 3 4 9v32q0 4-4 4H6q-4 0-4-4V13z" />
+                  <path class="jerrycan-water" d="M4 33h36v12q0 2-3 2H7q-3 0-3-2z" />
+                  <path class="jerrycan-cutout" d="M17 5h10v3H17z" />
+                  <path class="jerrycan-handle" d="m8 16 10 10m18-10L26 26M8 40l10-10m18 10L26 30" />
+                  <text class="jerrycan-label" x="22" y="30">B</text>
+                </g>
+                <g class="preview-jerrycan preview-jerrycan-labeled" transform="translate(229 86) scale(.72)">
+                  <path class="jerrycan-body" d="M6 4 12 1h20l6 3 4 9v32q0 4-4 4H6q-4 0-4-4V13z" />
+                  <path class="jerrycan-water" d="M4 33h36v12q0 2-3 2H7q-3 0-3-2z" />
+                  <path class="jerrycan-cutout" d="M17 5h10v3H17z" />
+                  <path class="jerrycan-handle" d="m8 16 10 10m18-10L26 26M8 40l10-10m18 10L26 30" />
+                  <text class="jerrycan-label" x="22" y="30">A</text>
+                </g>
+              </svg>
             </span>
-            <span class="level-card-bottom"><span><strong>Farther afield</strong><small>A new challenge awaits</small></span><span class="lock-icon" aria-label="Locked">⌑</span></span>
+            <span class="level-card-bottom"><span><strong>The Storm</strong><small>Match each cloud to its can</small></span><span class="lock-icon" aria-label="Locked">⌑</span></span>
           </button>
         </div>
       </section>
@@ -94,11 +185,12 @@
         </div>
         <div class="canvas-wrap" id="canvasWrap">
           <canvas id="gameCanvas" aria-label="Draw a line from the rain cloud to guide water into the can."></canvas>
+          <div class="milestone-toast hidden" id="milestoneMessage" role="status" aria-live="polite"></div>
           <div class="canvas-label label-cloud">THE CLOUD</div>
           <div class="canvas-label label-can">YOUR CAN</div>
           <div class="canvas-message hidden" id="canvasMessage"></div>
           <div class="level-intro hidden" id="levelIntro" role="dialog" aria-labelledby="levelIntroTitle" aria-describedby="levelIntroDescription">
-            <span class="eyebrow"><span class="eyebrow-dot"></span> LEVEL 02 BRIEFING</span>
+            <span class="eyebrow"><span class="eyebrow-dot"></span> <span id="levelIntroLabel">LEVEL 02 BRIEFING</span></span>
             <h2 id="levelIntroTitle">The Eye<span class="heading-period">.</span></h2>
             <p id="levelIntroDescription">Two storm clouds guard the route, and their lightning strikes are dangerous. You can't draw through the glowing strike zones. Guide the rain around them and fill both cans before the storm passes.</p>
             <button class="button button-primary" id="levelIntroButton">Enter the storm <span aria-hidden="true">→</span></button>
@@ -106,7 +198,12 @@
         </div>
         <div class="game-controls">
           <p><span class="draw-icon" aria-hidden="true">↗</span> <span id="controlHint">Drag to draw a path. Fewer lines = a better score.</span></p>
-          <button class="button button-primary rain-button" id="rainButton">Start the rain <span aria-hidden="true">→</span></button>
+          <div class="game-control-actions">
+            <button class="button button-secondary hard-mode-toggle" id="hardModeToggle" type="button" aria-pressed="false" title="Choose before drawing. Reset to change mode.">
+              Hard mode: <strong id="hardModeState">Off</strong>
+            </button>
+            <button class="button button-primary rain-button" id="rainButton">Start the rain <span aria-hidden="true">→</span></button>
+          </div>
         </div>
       </section>
 
@@ -117,13 +214,26 @@
         <p class="win-description">You filled the can with <strong id="winWater">0</strong> drops and used <strong id="winLines">0</strong> lines. That's something to feel good about.</p>
         <div class="win-score"><span>YOUR SCORE</span><strong id="scoreText">0</strong><small>drops caught · fewer lines score higher</small></div>
         <div class="unlock-note" id="unlockNote"><span>✳</span> Level 02 unlocked — a new challenge is on the horizon.</div>
+        <p class="victory-sound" role="status">♪ A little victory tune! ♪</p>
+        <section class="thank-you-panel" aria-labelledby="thankYouTitle">
+          <span class="eyebrow"><span class="eyebrow-dot"></span> THANKS FOR PLAYING</span>
+          <h2 id="thankYouTitle">Every drop matters.</h2>
+          <p>Clean water helps communities thrive. Want to help bring clean water to more people? Find ways to get involved with charity: water.</p>
+          <a class="button button-primary thank-you-link" href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">
+            Get involved <span aria-hidden="true">↗</span>
+          </a>
+        </section>
         <div class="win-actions">
           <button class="button button-primary" id="winLevelsButton">Choose a level <span aria-hidden="true">→</span></button>
           <button class="button button-secondary" id="againButton">Play again</button>
         </div>
       </section>
 
-      <footer class="footer"><span>rain<span class="brand-colon">:</span>catcher</span><span>EVERY DROP COUNTS</span></footer>
+      <footer class="footer">
+        <span>rain<span class="brand-colon">:</span>catcher</span>
+        <span>EVERY DROP COUNTS</span>
+        <a class="footer-link" href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">Learn about charity: water <span aria-hidden="true">↗</span></a>
+      </footer>
     </main>
     <script src="script.js"></script>
   </body>
